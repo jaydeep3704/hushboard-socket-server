@@ -44,6 +44,15 @@ class SocketService {
                 console.log("New message received:", message, timeStamp)
                 await pub.publish("MESSAGES", JSON.stringify({ message, timeStamp }))
             })
+            
+            socket.on("event:join-room",async({roomId}:{roomId:string})=>{
+                console.log("ROOM :",roomId)
+                await socket.join(roomId)
+            })
+
+            socket.on("event:room-message",async({message,timeStamp,roomId}:{ message: string; timeStamp: string,roomId:string})=>{
+                io.to(roomId).emit("recieve-room-message",{message,timeStamp})
+            })
         })
 
         sub.on("message", (channel, message) => {
