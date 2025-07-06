@@ -1,54 +1,54 @@
-import {Server} from "socket.io"
-import {Redis} from "ioredis";
+import { Server } from "socket.io"
+import { Redis } from "ioredis"
 
-const pub=new Redis({
+const pub = new Redis({
     host: 'redis-14439.crce182.ap-south-1-1.ec2.redns.redis-cloud.com',
-    port:14439,
-    username:"default",
-    password:"LxeLyc2qyEN6pnKKKRliepB0gDLoCUq6"
+    port: 14439,
+    username: "default",
+    password: "LxeLyc2qyEN6pnKKKRliepB0gDLoCUq6"
 })
 
-const sub=new Redis({
+const sub = new Redis({
     host: 'redis-14439.crce182.ap-south-1-1.ec2.redns.redis-cloud.com',
-    port:14439,
-    username:"default",
-    password:"LxeLyc2qyEN6pnKKKRliepB0gDLoCUq6"
+    port: 14439,
+    username: "default",
+    password: "LxeLyc2qyEN6pnKKKRliepB0gDLoCUq6"
 })
 
+class SocketService {
+    private _io: Server
 
-class SocketService{
-    private _io:Server;
-    
-    get io(){
+    get io() {
         return this._io
     }
-    
-    constructor(){
-        console.log("Init Socket Service ....")
+
+    constructor() {
+        console.log("Initializing Socket Service...")
         sub.subscribe("MESSAGES")
-        this._io=new Server({
-            cors:{
-                allowedHeaders:"*",
-                origin:"*"
+        this._io = new Server({
+            cors: {
+                allowedHeaders: "*",
+                origin: "*"
             }
         })
     }
 
-    public initListeners(){
-        const io=this.io;
-        console.log("Initialize Socket Listeners")
-        io.on('connect',socket=>{
-            console.log("New socket connected :",socket.id)
-            socket.on('event:message',async ({message}:{message:string})=>{
-                console.log("New message Rec",message)
-                await pub.publish("MESSAGES",JSON.stringify({message}))
+    public initListeners() {
+        const io = this.io
+        console.log("Initializing Socket Listeners...")
 
-            })  
+        io.on("connect", (socket) => {
+            console.log("New socket connected:", socket.id)
+
+            socket.on("event:message", async ({ message, timeStamp }: { message: string; timeStamp: string }) => {
+                console.log("New message received:", message, timeStamp)
+                await pub.publish("MESSAGES", JSON.stringify({ message, timeStamp }))
+            })
         })
 
-        sub.on('message',(channel,message)=>{
-            if(channel==="MESSAGES"){
-                io.emit('message',message)
+        sub.on("message", (channel, message) => {
+            if (channel === "MESSAGES") {
+                io.emit("message", message)
             }
         })
     }
