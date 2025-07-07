@@ -38,20 +38,23 @@ class SocketService {
         console.log("Initializing Socket Listeners...")
 
         io.on("connect", (socket) => {
-            console.log("New socket connected:", socket.id)
+            console.log("✅ New socket connected:", socket.id)
 
             socket.on("event:message", async ({ message, timeStamp }: { message: string; timeStamp: string }) => {
-                console.log("New message received:", message, timeStamp)
                 await pub.publish("MESSAGES", JSON.stringify({ message, timeStamp }))
             })
             
             socket.on("event:join-room",async({roomId}:{roomId:string})=>{
-                console.log("ROOM :",roomId)
                 await socket.join(roomId)
             })
 
+            socket.on("leave-room",(roomId:string)=>{
+                console.log(`${socket.id} left room ${roomId}`)
+                socket.leave(roomId)
+            })
+
             socket.on("event:room-message",async({message,timeStamp,roomId}:{ message: string; timeStamp: string,roomId:string})=>{
-                io.to(roomId).emit("recieve-room-message",{message,timeStamp})
+                io.to(roomId).emit("recieve-room-message",{message,timeStamp,roomId})
             })
         })
 
